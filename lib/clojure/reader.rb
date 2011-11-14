@@ -1,10 +1,18 @@
+require 'set'
+
 module Clojure
   class Reader
     MACROS = {
       '"' => :read_string,
+      '\\' => :read_character,
       '[' => :read_vector,
       '(' => :read_list,
-      '{' => :read_map
+      '{' => :read_map,
+      '#' => :read_dispatch
+    }
+
+    DISPATCH_MACROS = {
+      '{' => :read_set
     }
 
     def read_char(io)
@@ -45,6 +53,10 @@ module Clojure
         next_char = read_char(io)
       end
       s
+    end
+
+    def read_character(io)
+      read_char(io)
     end
 
     def read_number(io, first_digit)
@@ -106,6 +118,16 @@ module Clojure
       when "false" then false
       when /:(\w+)/ then $1.to_sym
       end
+    end
+
+    def read_dispatch(io)
+      macro = DISPATCH_MACROS[read_char(io)]
+      send(macro, io)
+    end
+
+    def read_set(io)
+      list = _read_delimited_list(io, '}')
+      Set.new(list)
     end
   end
 end

@@ -9,6 +9,12 @@ class ParserTest < Test::Unit::TestCase
     assert_equal "a string", output
   end
 
+  def test_parsing_characters
+    reader = Clojure::Reader.new
+    output = reader.read(StringIO.new('\a'))
+    assert_equal "a", output
+  end
+
   def test_parsing_integers
     reader = Clojure::Reader.new
     output = reader.read(StringIO.new("15 "))
@@ -75,4 +81,15 @@ class ParserTest < Test::Unit::TestCase
     assert_equal({:a => {:b => 1}}, output)
   end
 
+  def test_parsing_sets
+    reader = Clojure::Reader.new
+    output = reader.read(StringIO.new('#{1 2 3 4}'))
+    assert_equal(Set.new([1, 2, 3, 4]), output)
+  end
+
+  def test_parsing_nested_sets
+    reader = Clojure::Reader.new
+    output = reader.read(StringIO.new('#{1 2 3 #{4}}'))
+    assert_equal(Set.new([1, 2, 3, Set.new([4])]), output)
+  end
 end
