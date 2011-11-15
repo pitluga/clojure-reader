@@ -9,6 +9,12 @@ class ParserTest < Test::Unit::TestCase
     assert_equal "a string", output
   end
 
+  def test_parsing_strings_with_leading_whitespace
+    reader = Clojure::Reader.new
+    output = reader.read(StringIO.new(%[    "a string"]))
+    assert_equal "a string", output
+  end
+
   def test_parsing_characters
     reader = Clojure::Reader.new
     output = reader.read(StringIO.new('\a'))
@@ -78,6 +84,28 @@ class ParserTest < Test::Unit::TestCase
   def test_parsing_nested_maps
     reader = Clojure::Reader.new
     output = reader.read(StringIO.new("{:a {:b 1}}"))
+    assert_equal({:a => {:b => 1}}, output)
+  end
+
+  def test_parsing_multiline_maps
+    reader = Clojure::Reader.new
+    output = reader.read(StringIO.new(<<-EOF))
+    {
+      :a 1
+    }
+    EOF
+    assert_equal({:a => 1}, output)
+  end
+
+  def test_parsing_nested_multiline_map
+    reader = Clojure::Reader.new
+    output = reader.read(StringIO.new(<<-EOF))
+    {
+      :a {
+        :b 1
+      }
+    }
+    EOF
     assert_equal({:a => {:b => 1}}, output)
   end
 

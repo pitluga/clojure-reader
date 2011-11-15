@@ -19,6 +19,13 @@ module Clojure
       io.readchar.chr
     end
 
+    def read_to_nonwhitespace_char(io)
+      begin
+        next_char = read_char(io)
+      end while whitespace?(next_char)
+      next_char
+    end
+
     def push_char(io, char)
       io.ungetc(char[0])
     end
@@ -32,7 +39,8 @@ module Clojure
     end
 
     def read(io)
-      next_char = read_char(io)
+      next_char = read_to_nonwhitespace_char(io)
+
       if number?(next_char)
         read_number(io, next_char)
       else
@@ -71,20 +79,20 @@ module Clojure
     end
 
     def _read_delimited_list(io, delimiter)
-      v = []
-      next_char = read_char(io)
+      list = []
+      next_char = read_to_nonwhitespace_char(io)
       until next_char == delimiter
         reader_method = MACROS[next_char]
         unless reader_method.nil?
-          v << send(reader_method, io)
+          list << send(reader_method, io)
         else
           push_char(io, next_char)
-          v << read(io)
+          list << read(io)
         end
         break if io.eof?
-        next_char = read_char(io)
+        next_char = read_to_nonwhitespace_char(io)
       end
-      v
+      list
     end
 
     def read_list(io)
@@ -114,9 +122,11 @@ module Clojure
 
     def interpret_token(s)
       case s
+      when "nil" then nil
       when "true" then true
       when "false" then false
       when /:(\w+)/ then $1.to_sym
+      else raise "unknown token: #{s}"
       end
     end
 
